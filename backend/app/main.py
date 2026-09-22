@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.database import engine, Base
-from app.routers import auth
+from app.routers import auth, chat
 import app.models  # noqa: F401 — registers all models with Base metadata
 
 settings = get_settings()
@@ -18,7 +18,7 @@ Base.metadata.create_all(bind=engine)
 # ── FastAPI app ───────────────────────────────────────────────────────────────
 app = FastAPI(
     title="MannMitra API",
-    description="Affect-aware companion backend — authentication service",
+    description="Affect-aware companion backend — authentication & chat services",
     version="0.1.0",
     docs_url="/docs",       # Swagger UI at http://localhost:8000/docs
     redoc_url="/redoc",     # ReDoc at http://localhost:8000/redoc
@@ -35,6 +35,7 @@ app.add_middleware(
 
 # ── Routers ───────────────────────────────────────────────────────────────────
 app.include_router(auth.router)
+app.include_router(chat.router)
 
 
 # ── Health check ─────────────────────────────────────────────────────────────

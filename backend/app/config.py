@@ -17,11 +17,15 @@ class Settings(BaseSettings):
     # CORS
     cors_origins: str = "http://localhost:3000,http://localhost:3001"
 
+    # Groq AI
+    groq_api_key: str = ""
+    groq_model: str = "llama-3.3-70b-versatile"
+
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",")]
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 
 @lru_cache

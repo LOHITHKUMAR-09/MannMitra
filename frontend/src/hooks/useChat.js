@@ -26,26 +26,52 @@ export function useChat(interests = [], speak = null) {
 
   const handleSend = useCallback(async (text) => {
     if (!text?.trim()) return
-    dispatch({ type: 'ADD_MSG', payload: { id:`u_${Date.now()}`, role:'user', text:text.trim(), timestamp:new Date().toISOString() } })
+    const userText = text.trim()
+    dispatch({ type: 'ADD_MSG', payload: { id:`u_${Date.now()}`, role:'user', text:userText, timestamp:new Date().toISOString() } })
     dispatch({ type: 'SET_TYPING', payload: true })
 
     try {
-      const history = state.messages.slice(-4).map(m => m.text)
-      const { mood } = await analyzeMood(text, history)
-      dispatch({ type: 'SET_MOOD', payload: mood })
+      // Build conversation history for semantic context and Rogerian memory
+      const history = state.messages
+        .filter(m => m.role === 'user' || m.role === 'bot')
+        .slice(-6)
+        .map(m => ({
+          role: m.role === 'user' ? 'user' : 'assistant',
+          text: m.text,
+        }))
 
-      if (mood === MOODS.CRISIS) {
+      const response = await sendMessage({
+        message: userText,
+        history,
+        interests,
+      })
+
+      const { reply, mood, is_crisis, risk_level, activity } = response
+      const resolvedMood = mood || 'neutral'
+      dispatch({ type: 'SET_MOOD', payload: resolvedMood })
+
+      if (is_crisis || resolvedMood === MOODS.CRISIS) {
+        const crisisText = reply || "It sounds like things feel very heavy right now — more than any app should carry with you. Please reach out to a person right now."
         dispatch({ type: 'ADD_MSG', payload: {
-          id:`crisis_${Date.now()}`, role:'crisis',
-          text:"It sounds like things feel very heavy right now — more than any app should carry with you. Please reach out to a person right now.",
-          mood:'crisis', timestamp:new Date().toISOString()
+          id: `crisis_${Date.now()}`,
+          role: 'crisis',
+          text: crisisText,
+          mood: 'crisis',
+          risk_level: risk_level || 'acute',
+          timestamp: new Date().toISOString(),
         }})
-        speak?.("It sounds like things feel very heavy right now. Please reach out to a person right now — helpline numbers are showing.")
+        speak?.(crisisText)
         return
       }
 
-      const { reply, activity } = await sendMessage(text, mood, interests, history)
-      dispatch({ type: 'ADD_MSG', payload: { id:`b_${Date.now()}`, role:'bot', text:reply, mood, activity, timestamp:new Date().toISOString() } })
+      dispatch({ type: 'ADD_MSG', payload: {
+        id: `b_${Date.now()}`,
+        role: 'bot',
+        text: reply,
+        mood: resolvedMood,
+        activity,
+        timestamp: new Date().toISOString(),
+      }})
       speak?.(reply)
     } catch {
       dispatch({ type: 'SET_ERROR', payload: 'Something went wrong. Please try again.' })
