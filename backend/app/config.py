@@ -19,7 +19,7 @@ class Settings(BaseSettings):
 
     # Groq AI
     groq_api_key: str = ""
-    groq_model: str = "llama-3.3-70b-versatile"
+    groq_model: str = "qwen/qwen3.8-27b"
 
     @property
     def cors_origins_list(self) -> list[str]:

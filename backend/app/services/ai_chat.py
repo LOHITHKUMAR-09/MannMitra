@@ -101,11 +101,13 @@ def _semantic_fallback_evaluation(text: str) -> Dict[str, Any]:
     t = " " + text.lower() + " "
 
     crisis_patterns = [
-        "suicide", "kill myself", "want to die", "end it all", "end my life",
+        "suicide", "kill myself", "want to die", "decided to die", "deciding to die",
+        "going to die", "ready to die", "wish to die", "end it all", "end my life",
         "better off dead", "no reason to live", "wish i was dead", "not worth living",
         "take my own life", "hurt myself", "self harm", "goodbye everyone",
         "won't be here tomorrow", "giving away my", "can't go on anymore",
-        "everyone would be better without me", "i am a burden", "rather be dead"
+        "everyone would be better without me", "better off without me", "i am a burden",
+        "rather be dead", "tired of living", "stop existing", "disappear forever",
     ]
 
     is_hyperbole = any(h in t for h in ["killing me with laughter", "dying of laughter", "dead tired"])
@@ -117,7 +119,7 @@ def _semantic_fallback_evaluation(text: str) -> Dict[str, Any]:
             "risk_level": "acute",
             "mood": "crisis",
             "confidence": 0.95,
-            "rationale": "High-urgency distress or existential crisis cue detected in message.",
+            "rationale": "High-urgency distress, existential despair, or crisis cue detected.",
             "engine": "fallback-semantic",
         }
 
@@ -146,6 +148,47 @@ def _semantic_fallback_evaluation(text: str) -> Dict[str, Any]:
     }
 
 
+_CACHED_MODEL: Optional[str] = None
+
+async def _resolve_groq_model(api_key: str) -> str:
+    """
+    Dynamically verifies and returns an active chat model on the Groq account.
+    Prevents 404 errors if a specific model is not enabled for the user's tier.
+    """
+    global _CACHED_MODEL
+    if _CACHED_MODEL:
+        return _CACHED_MODEL
+
+    configured = (settings.groq_model or "").strip()
+    candidates = [
+        configured,
+        "qwen/qwen3.8-27b",
+        "openai/gpt-oss-120b",
+        "openai/gpt-oss-20b",
+        "llama-3.3-70b-versatile",
+        "llama3-70b-8192",
+    ]
+    candidates = [c for c in candidates if c]
+
+    try:
+        async with httpx.AsyncClient(timeout=4.0) as client:
+            resp = await client.get(
+                "https://api.groq.com/openai/v1/models",
+                headers={"Authorization": f"Bearer {api_key}"}
+            )
+            if resp.status_code == 200:
+                available = {m["id"] for m in resp.json().get("data", [])}
+                for cand in candidates:
+                    if cand in available:
+                        _CACHED_MODEL = cand
+                        return cand
+    except Exception:
+        pass
+
+    _CACHED_MODEL = configured or "qwen/qwen3.8-27b"
+    return _CACHED_MODEL
+
+
 async def evaluate_safety_and_mood(
     message: str,
     history: List[MessageItem],
@@ -156,6 +199,8 @@ async def evaluate_safety_and_mood(
     api_key = settings.groq_api_key.strip()
     if not api_key:
         return _semantic_fallback_evaluation(message)
+
+    model = await _resolve_groq_model(api_key)
 
     recent_history = [
         {"role": "user" if m.role == "user" else "assistant", "content": m.text}
@@ -177,7 +222,7 @@ async def evaluate_safety_and_mood(
                     "Content-Type": "application/json",
                 },
                 json={
-                    "model": settings.groq_model,
+                    "model": model,
                     "messages": messages,
                     "temperature": 0.1,
                     "max_tokens": 160,
@@ -188,7 +233,7 @@ async def evaluate_safety_and_mood(
         if resp.status_code == 200:
             content = resp.json()["choices"][0]["message"]["content"]
             parsed = json.loads(content)
-            parsed["engine"] = f"groq-{settings.groq_model}"
+            parsed["engine"] = f"groq-{model}"
             return parsed
     except Exception:
         pass
@@ -220,22 +265,24 @@ async def generate_companion_reply(
         if interest in ACTIVITY_CATALOG:
             suggested_activity = ActivitySuggestion(**ACTIVITY_CATALOG[interest])
 
+    fallback_replies = {
+        "happy": "That is so genuinely lovely to hear. Take a moment to really soak in that feeling — you deserve it.",
+        "sad": "I hear how heavy that feels right now. Thank you for trusting me with it. Take your time — I'm right here with you.",
+        "anxious": "It sounds like thoughts are spinning fast and everything feels loud. Breathe with me for a second. You don't have to solve it all right this minute.",
+        "angry": "That frustration makes complete sense. When things feel unfair or push you past your limit, it's exhausting.",
+        "stressed": "You are carrying a very real amount of pressure right now. It makes complete sense that you feel drained.",
+        "neutral": "Thank you for sharing that with me. I'm right here listening — tell me more whenever you'd like.",
+        "crisis": "I hear how completely exhausted and overwhelmed you are right now. Your pain is real, but you do not have to carry this completely alone. Please reach out to someone who can hear your voice.",
+    }
+
     if not api_key:
-        # High-quality contextual fallback replies
-        fallback_replies = {
-            "happy": "That is so genuinely lovely to hear. Take a moment to really soak in that feeling — you deserve it.",
-            "sad": "I hear how heavy that feels right now. Thank you for trusting me with it. Take your time — I'm right here with you.",
-            "anxious": "It sounds like thoughts are spinning fast and everything feels loud. Breathe with me for a second. You don't have to solve it all right this minute.",
-            "angry": "That frustration makes complete sense. When things feel unfair or push you past your limit, it's exhausting.",
-            "stressed": "You are carrying a very real amount of pressure right now. It makes complete sense that you feel drained.",
-            "neutral": "Thank you for sharing that with me. I'm right here listening — tell me more whenever you'd like.",
-            "crisis": "I hear how completely exhausted and overwhelmed you are right now. Your pain is real, but you do not have to carry this completely alone. Please reach out to someone who can hear your voice.",
-        }
         return {
-            "reply": fallback_replies.get(mood, fallback_replies["neutral"]),
+            "reply": fallback_replies.get(mood, fallback_replies["crisis" if is_crisis else "neutral"]),
             "activity": suggested_activity,
             "engine": "fallback-semantic",
         }
+
+    model = await _resolve_groq_model(api_key)
 
     # Format history for LLM
     formatted_history = []
@@ -268,7 +315,7 @@ async def generate_companion_reply(
                     "Content-Type": "application/json",
                 },
                 json={
-                    "model": settings.groq_model,
+                    "model": model,
                     "messages": messages,
                     "temperature": 0.7,
                     "max_tokens": 220,
@@ -280,13 +327,13 @@ async def generate_companion_reply(
             return {
                 "reply": reply_text,
                 "activity": suggested_activity,
-                "engine": f"groq-{settings.groq_model}",
+                "engine": f"groq-{model}",
             }
     except Exception:
         pass
 
     return {
-        "reply": "I'm listening and I'm right here with you. Tell me what's on your mind.",
+        "reply": fallback_replies.get(mood, fallback_replies["crisis" if is_crisis else "neutral"]),
         "activity": suggested_activity,
         "engine": "fallback-semantic",
     }
