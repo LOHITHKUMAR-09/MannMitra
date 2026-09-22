@@ -1,0 +1,98 @@
+.panel {
+  background: rgba(255,255,255,0.025);
+  backdrop-filter: blur(16px);
+  border-right: 1px solid rgba(255,255,255,0.06);
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 220px;
+}
+
+.heading {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+
+.hint {
+  font-size: 0.78rem;
+  color: var(--text-faint);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.interests {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  font-size: 0.86rem;
+  color: var(--text-faint);
+  position: relative;
+}
+.opt:hover {
+  background: rgba(255,255,255,0.05);
+  color: var(--text-dim);
+}
+.checked {
+  background: rgba(111,184,168,0.08);
+  border-color: rgba(111,184,168,0.2);
+  color: var(--text);
+}
+
+.checkbox { display: none; }
+.icon { font-size: 1rem; flex-shrink: 0; }
+.optLabel { flex: 1; }
+
+.check {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--calm);
+  margin-left: auto;
+}
+
+.orbSection {
+  margin-top: auto;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.orbWrap {
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.moodLabel {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.moodName {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  font-style: italic;
+}

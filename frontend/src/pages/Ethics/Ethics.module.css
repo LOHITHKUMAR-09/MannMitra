@@ -1,0 +1,9 @@
+.intro { max-width: 62ch; margin-bottom: 40px; }
+.list { list-style: none; margin: 0; padding: 0; }
+.item { display: grid; grid-template-columns: 28px 1fr; gap: 18px; padding: 22px 0; border-top: 1px solid rgba(255,255,255,0.06); }
+.item:last-child { border-bottom: 1px solid rgba(255,255,255,0.06); margin-bottom: 40px; }
+.mark { font-family: var(--font-mono); font-size: 0.68rem; color: var(--calm); padding-top: 4px; }
+.item h4 { margin-bottom: 6px; }
+.item p { margin: 0; font-size: 0.9rem; }
+.callout {}
+.callout p { color: #e7c9cb; margin: 0; font-size: 0.9rem; line-height: 1.7; }
