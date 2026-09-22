@@ -47,3 +47,109 @@
 .ctaCard { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 16px; }
 .ctaCard h2 { margin-bottom: 4px; }
 .ctaCard p { max-width: 46ch; }
+
+/* ── Ambient sound controller pill ── */
+.soundPill {
+  position: fixed;
+  bottom: 24px;
+  right: 28px;
+  z-index: 99;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 16px;
+  border-radius: 100px;
+  background: rgba(12, 16, 30, 0.88);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  user-select: none;
+  animation: floatIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes floatIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.soundPill:hover {
+  background: rgba(16, 22, 40, 0.96);
+  border-color: rgba(111, 184, 168, 0.35);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6), 0 0 20px rgba(111, 184, 168, 0.15);
+  transform: translateY(-2px);
+}
+
+.soundPillActive {
+  border-color: rgba(111, 184, 168, 0.3);
+}
+
+.soundPillMuted {
+  border-color: rgba(255, 255, 255, 0.08);
+  opacity: 0.85;
+}
+
+.soundPillIcon {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.soundPillText {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  color: var(--text-dim);
+}
+
+.soundWaves {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 10px;
+}
+
+.soundWaves span {
+  width: 2px;
+  background: var(--calm);
+  border-radius: 1px;
+  animation: barPlay 0.85s ease-in-out infinite alternate;
+}
+
+.soundWaves span:nth-child(1) { height: 4px; animation-delay: 0.1s; }
+.soundWaves span:nth-child(2) { height: 10px; animation-delay: 0.3s; }
+.soundWaves span:nth-child(3) { height: 6px; animation-delay: 0.2s; }
+
+@keyframes barPlay {
+  0%   { height: 3px; }
+  100% { height: 11px; }
+}
+
+.soundPillAction {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 2px 7px;
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--calm);
+  transition: all 0.2s;
+}
+
+.soundPill:hover .soundPillAction {
+  background: rgba(111, 184, 168, 0.15);
+  border-color: rgba(111, 184, 168, 0.4);
+}
+
+@media (max-width: 600px) {
+  .soundPill {
+    bottom: 16px;
+    right: 16px;
+    padding: 7px 13px;
+  }
+  .soundPillText {
+    display: none;
+  }
+}

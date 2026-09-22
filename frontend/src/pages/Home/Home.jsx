@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import Orb from '@/components/ui/Orb/Orb'
 import Eyebrow from '@/components/ui/Eyebrow/Eyebrow'
@@ -25,12 +25,86 @@ const FEATURES = [
 
 export default function Home() {
   const [moodIdx, setMoodIdx] = useState(0)
+  const [isMuted, setIsMuted] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const audioRef = useRef(null)
+
   const mood = ['happy','sad','anxious','angry','stressed','neutral'][moodIdx % 6]
 
   useEffect(() => {
     const t = setInterval(() => setMoodIdx(i => i + 1), 3400)
     return () => clearInterval(t)
   }, [])
+
+  // Background nature music — exclusively active on the landing page
+  useEffect(() => {
+    const audio = new Audio('/audio/nature.mp3')
+    audio.loop = true
+    audio.volume = 0.4
+    audioRef.current = audio
+
+    let interacted = false
+
+    const startAudio = () => {
+      audio.play()
+        .then(() => {
+          setIsPlaying(true)
+          setIsMuted(false)
+        })
+        .catch(() => {
+          // Browser requires user interaction before autoplay
+          setIsPlaying(false)
+          setIsMuted(true)
+        })
+    }
+
+    startAudio()
+
+    const onUserInteract = () => {
+      if (interacted) return
+      interacted = true
+      if (audio.paused && !audio.muted) {
+        audio.play()
+          .then(() => {
+            setIsPlaying(true)
+            setIsMuted(false)
+          })
+          .catch(() => {})
+      }
+    }
+
+    window.addEventListener('click', onUserInteract, { passive: true })
+    window.addEventListener('keydown', onUserInteract, { passive: true })
+    window.addEventListener('touchstart', onUserInteract, { passive: true })
+
+    // Clean up when leaving landing page: stop audio completely
+    return () => {
+      window.removeEventListener('click', onUserInteract)
+      window.removeEventListener('keydown', onUserInteract)
+      window.removeEventListener('touchstart', onUserInteract)
+      audio.pause()
+      audio.currentTime = 0
+      audioRef.current = null
+    }
+  }, [])
+
+  const toggleMute = () => {
+    const audio = audioRef.current
+    if (!audio) return
+
+    if (isMuted || audio.paused) {
+      audio.muted = false
+      audio.play()
+        .then(() => {
+          setIsPlaying(true)
+          setIsMuted(false)
+        })
+        .catch(() => {})
+    } else {
+      audio.muted = true
+      setIsMuted(true)
+    }
+  }
 
   return (
     <div className={styles.page}>
@@ -123,6 +197,28 @@ export default function Home() {
           </GlassCard>
         </div>
       </section>
+
+      {/* ── Ambient sound controller pill with mute button ── */}
+      <button
+        className={`${styles.soundPill} ${isMuted ? styles.soundPillMuted : styles.soundPillActive}`}
+        onClick={toggleMute}
+        title={isMuted ? "Unmute nature ambient music" : "Mute nature ambient music"}
+        aria-label={isMuted ? "Unmute nature ambient music" : "Mute nature ambient music"}
+        type="button"
+      >
+        <span className={styles.soundPillIcon}>{isMuted ? '🔇' : '🌿'}</span>
+        <span className={styles.soundPillText}>
+          {isMuted ? 'Nature sound muted' : 'Nature ambience'}
+        </span>
+        {!isMuted && isPlaying && (
+          <span className={styles.soundWaves}>
+            <span /><span /><span />
+          </span>
+        )}
+        <span className={styles.soundPillAction}>
+          {isMuted ? 'Unmute' : 'Mute'}
+        </span>
+      </button>
 
     </div>
   )
