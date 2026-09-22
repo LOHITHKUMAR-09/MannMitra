@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { ChatProvider } from './context/ChatContext'
 import Layout from './components/layout/Layout/Layout'
+import AmbientPlayer from './components/ui/AmbientPlayer/AmbientPlayer'
 import Home from './pages/Home/Home'
 import Chat from './pages/Chat/Chat'
 import About from './pages/About/About'
@@ -16,6 +17,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <ChatProvider>
+        {/* Global ambient music controller on every page (muted by default on /chat and /login) */}
+        <AmbientPlayer />
         <Routes>
           {/* ── Standalone full-screen routes (no Nav/Footer) ── */}
           <Route path="/login"    element={<Login />} />

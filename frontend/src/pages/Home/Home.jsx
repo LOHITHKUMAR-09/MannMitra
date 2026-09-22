@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Orb from '@/components/ui/Orb/Orb'
 import Eyebrow from '@/components/ui/Eyebrow/Eyebrow'
@@ -23,104 +23,14 @@ const FEATURES = [
   { icon:'🆘', title:'Crisis Safety',    desc:'Detects crisis language and routes immediately to a human.' },
 ]
 
-const AMBIENT_TRACKS = [
-  { id: 'nature',     title: 'Nature Ambience',  icon: '🌿', src: '/audio/nature.mp3' },
-  { id: 'meditation', title: 'Deep Meditation',  icon: '🧘', src: '/audio/meditation.mp3' },
-  { id: 'flute',      title: 'Krishna Flute',    icon: '🪈', src: '/audio/flute.mp3' },
-]
-
 export default function Home() {
   const [moodIdx, setMoodIdx] = useState(0)
-  const [currentTrackId, setCurrentTrackId] = useState('nature')
-  const [isMuted, setIsMuted] = useState(false)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const audioRef = useRef(null)
-
-  const currentTrack = AMBIENT_TRACKS.find(t => t.id === currentTrackId) || AMBIENT_TRACKS[0]
   const mood = ['happy','sad','anxious','angry','stressed','neutral'][moodIdx % 6]
 
   useEffect(() => {
     const t = setInterval(() => setMoodIdx(i => i + 1), 3400)
     return () => clearInterval(t)
   }, [])
-
-  // Ambient music playback — exclusively active on the landing page
-  useEffect(() => {
-    const audio = new Audio(currentTrack.src)
-    audio.loop = true
-    audio.volume = 0.42
-    audio.muted = isMuted
-    audioRef.current = audio
-
-    let interacted = false
-
-    const startAudio = () => {
-      audio.play()
-        .then(() => {
-          setIsPlaying(true)
-          setIsMuted(false)
-        })
-        .catch(() => {
-          // Autoplay restricted until user interaction
-          setIsPlaying(false)
-          setIsMuted(true)
-        })
-    }
-
-    if (!isMuted) {
-      startAudio()
-    }
-
-    const onUserInteract = () => {
-      if (interacted) return
-      interacted = true
-      if (audio.paused && !audio.muted) {
-        audio.play()
-          .then(() => {
-            setIsPlaying(true)
-            setIsMuted(false)
-          })
-          .catch(() => {})
-      }
-    }
-
-    window.addEventListener('click', onUserInteract, { passive: true })
-    window.addEventListener('keydown', onUserInteract, { passive: true })
-    window.addEventListener('touchstart', onUserInteract, { passive: true })
-
-    // Clean up when switching tracks or navigating away: stop audio completely
-    return () => {
-      window.removeEventListener('click', onUserInteract)
-      window.removeEventListener('keydown', onUserInteract)
-      window.removeEventListener('touchstart', onUserInteract)
-      audio.pause()
-      audio.currentTime = 0
-      audioRef.current = null
-    }
-  }, [currentTrackId])
-
-  const toggleMute = () => {
-    const audio = audioRef.current
-    if (!audio) return
-
-    if (isMuted || audio.paused) {
-      audio.muted = false
-      audio.play()
-        .then(() => {
-          setIsPlaying(true)
-          setIsMuted(false)
-        })
-        .catch(() => {})
-    } else {
-      audio.muted = true
-      setIsMuted(true)
-    }
-  }
-
-  const handleTrackChange = (newId) => {
-    setCurrentTrackId(newId)
-    setIsMuted(false)
-  }
 
   return (
     <div className={styles.page}>
@@ -213,42 +123,6 @@ export default function Home() {
           </GlassCard>
         </div>
       </section>
-
-      {/* ── Ambient sound controller with dropdown track selector & mute button ── */}
-      <div className={`${styles.soundController} ${isMuted ? styles.soundMuted : styles.soundActive}`}>
-        <div className={styles.trackSelectWrap}>
-          <select
-            className={styles.trackSelect}
-            value={currentTrackId}
-            onChange={e => handleTrackChange(e.target.value)}
-            aria-label="Select background ambience music"
-          >
-            {AMBIENT_TRACKS.map(t => (
-              <option key={t.id} value={t.id} className={styles.trackOption}>
-                {t.icon} {t.title}
-              </option>
-            ))}
-          </select>
-          <span className={styles.selectArrow}>▾</span>
-        </div>
-
-        {!isMuted && isPlaying && (
-          <span className={styles.soundWaves}>
-            <span /><span /><span />
-          </span>
-        )}
-
-        <button
-          type="button"
-          className={styles.muteBtn}
-          onClick={toggleMute}
-          title={isMuted ? `Unmute ${currentTrack.title}` : `Mute ${currentTrack.title}`}
-          aria-label={isMuted ? "Unmute sound" : "Mute sound"}
-        >
-          <span className={styles.muteIcon}>{isMuted ? '🔇' : '🔊'}</span>
-          <span className={styles.muteText}>{isMuted ? 'Unmute' : 'Mute'}</span>
-        </button>
-      </div>
 
     </div>
   )
