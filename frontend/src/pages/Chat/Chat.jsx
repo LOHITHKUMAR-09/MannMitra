@@ -198,7 +198,7 @@ const ACTIVITY_MAP = {
    ═══════════════════════════════════════════ */
 export default function Chat() {
   const { interests, toggleInterest } = useChatContext()
-  const { speak, voiceOutputOn, toggleVoiceOutput, isListening, startListening, hasSpeechSynthesis, hasSpeechRecognition } = useSpeech()
+  const { speak, speakDirect, stopSpeaking, speakingId, isListening, startListening, hasSpeechSynthesis, hasSpeechRecognition } = useSpeech()
   const { messages, currentMood, isTyping, handleSend } = useChat(interests, speak)
 
   const [inputVal, setInputVal]             = useState('')
@@ -311,17 +311,6 @@ export default function Chat() {
             <span>Activities</span>
           </button>
 
-          {hasSpeechRecognition && (
-            <button className={`${styles.iconBtn} ${isListening?styles.iconBtnActive:''}`}
-              onClick={() => startListening(t => setInputVal(t))} title="Voice input">🎤</button>
-          )}
-          {hasSpeechSynthesis && (
-            <button className={`${styles.iconBtn} ${voiceOutputOn?styles.iconBtnActive:''}`}
-              onClick={toggleVoiceOutput} title="Voice output">
-              {voiceOutputOn ? '🔊' : '🔇'}
-            </button>
-          )}
-
           {/* Solid Logout button */}
           <button
             className={styles.solidLogoutBtn}
@@ -367,9 +356,38 @@ export default function Chat() {
                     <div className={styles.botContent}>
                       <div className={styles.botBubble}>
                         <p>{msg.text}</p>
-                        {msg.mood && msg.mood!=='neutral' && (
-                          <span className={styles.moodTag}>{moodEmoji[msg.mood]} {msg.mood}</span>
-                        )}
+                        <div className={styles.botBubbleMeta}>
+                          {msg.mood && msg.mood!=='neutral' ? (
+                            <span className={styles.moodTag}>{moodEmoji[msg.mood]} {msg.mood}</span>
+                          ) : <span />}
+                          {hasSpeechSynthesis && (
+                            <button
+                              type="button"
+                              className={`${styles.voiceOutBtn} ${speakingId === msg.id ? styles.voiceOutActive : ''}`}
+                              onClick={() => speakDirect(msg.id, msg.text)}
+                              title={speakingId === msg.id ? "Stop reading" : "Read response aloud"}
+                              aria-label="Voice out response"
+                            >
+                              {speakingId === msg.id ? (
+                                <>
+                                  <span className={styles.soundWaves}>
+                                    <span /><span /><span />
+                                  </span>
+                                  <span>Stop</span>
+                                </>
+                              ) : (
+                                <>
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                                  </svg>
+                                  <span>Listen</span>
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </div>
                       </div>
                       {msg.activity && (
                         <div className={styles.actSuggest}>
@@ -384,7 +402,36 @@ export default function Chat() {
                 )}
                 {msg.role === 'crisis' && (
                   <div className={styles.crisisBubble}>
-                    <div className={styles.crisisHeader}><span>🆘</span><span>Human support needed</span></div>
+                    <div className={styles.crisisHeader}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span>🆘</span>
+                        <span>Human support needed</span>
+                      </div>
+                      {hasSpeechSynthesis && (
+                        <button
+                          type="button"
+                          className={`${styles.voiceOutBtn} ${styles.crisisVoiceOut} ${speakingId === msg.id ? styles.voiceOutActive : ''}`}
+                          onClick={() => speakDirect(msg.id, msg.text)}
+                          title={speakingId === msg.id ? "Stop voice" : "Read message aloud"}
+                          aria-label="Voice out response"
+                        >
+                          {speakingId === msg.id ? (
+                            <>
+                              <span className={styles.soundWaves}><span /><span /><span /></span>
+                              <span>Stop</span>
+                            </>
+                          ) : (
+                            <>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                              </svg>
+                              <span>Listen</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
                     <p>{msg.text}</p>
                     <div className={styles.helplines}>
                       {HELPLINES.map(({name,contact}) => (
@@ -420,10 +467,33 @@ export default function Chat() {
               value={inputVal}
               onChange={e => setInputVal(e.target.value)}
               onKeyDown={e => { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()} }}
-              placeholder="Tell me how you're feeling…"
-              className={styles.input}
+              placeholder={isListening ? "Listening... speak into your microphone" : "Tell me how you're feeling…"}
+              className={`${styles.input} ${isListening ? styles.inputListening : ''}`}
             />
-            <button className={styles.sendBtn} onClick={send} disabled={!inputVal.trim()}>
+
+            {/* Voice in (speech recognition) beside send button */}
+            {hasSpeechRecognition && (
+              <button
+                type="button"
+                className={`${styles.voiceInBtn} ${isListening ? styles.voiceInActive : ''}`}
+                onClick={() => startListening(t => setInputVal(prev => prev ? `${prev} ${t}` : t))}
+                title={isListening ? "Listening… click to stop" : "Voice input (Speak message)"}
+                aria-label="Voice input"
+              >
+                {isListening ? (
+                  <span style={{ fontSize: '1rem' }}>⏹</span>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                    <line x1="12" y1="19" x2="12" y2="23"/>
+                    <line x1="8" y1="23" x2="16" y2="23"/>
+                  </svg>
+                )}
+              </button>
+            )}
+
+            <button className={styles.sendBtn} onClick={send} disabled={!inputVal.trim()} title="Send message">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
               </svg>
