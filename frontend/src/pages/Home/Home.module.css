@@ -93,14 +93,7 @@
 .trackSelectWrap {
   display: flex;
   align-items: center;
-  gap: 6px;
   position: relative;
-}
-
-.trackIcon {
-  font-size: 0.95rem;
-  line-height: 1;
-  pointer-events: none;
 }
 
 .trackSelect {
@@ -110,7 +103,7 @@
   font-family: var(--font-mono);
   font-size: 0.73rem;
   letter-spacing: 0.02em;
-  padding: 4px 18px 4px 2px;
+  padding: 4px 18px 4px 4px;
   cursor: pointer;
   outline: none;
   appearance: none;

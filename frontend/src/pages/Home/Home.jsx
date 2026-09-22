@@ -217,7 +217,6 @@ export default function Home() {
       {/* ── Ambient sound controller with dropdown track selector & mute button ── */}
       <div className={`${styles.soundController} ${isMuted ? styles.soundMuted : styles.soundActive}`}>
         <div className={styles.trackSelectWrap}>
-          <span className={styles.trackIcon}>{currentTrack.icon}</span>
           <select
             className={styles.trackSelect}
             value={currentTrackId}
