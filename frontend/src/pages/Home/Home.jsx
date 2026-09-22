@@ -23,12 +23,20 @@ const FEATURES = [
   { icon:'🆘', title:'Crisis Safety',    desc:'Detects crisis language and routes immediately to a human.' },
 ]
 
+const AMBIENT_TRACKS = [
+  { id: 'nature',     title: 'Nature Ambience',  icon: '🌿', src: '/audio/nature.mp3' },
+  { id: 'meditation', title: 'Deep Meditation',  icon: '🧘', src: '/audio/meditation.mp3' },
+  { id: 'flute',      title: 'Krishna Flute',    icon: '🪈', src: '/audio/flute.mp3' },
+]
+
 export default function Home() {
   const [moodIdx, setMoodIdx] = useState(0)
+  const [currentTrackId, setCurrentTrackId] = useState('nature')
   const [isMuted, setIsMuted] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const audioRef = useRef(null)
 
+  const currentTrack = AMBIENT_TRACKS.find(t => t.id === currentTrackId) || AMBIENT_TRACKS[0]
   const mood = ['happy','sad','anxious','angry','stressed','neutral'][moodIdx % 6]
 
   useEffect(() => {
@@ -36,11 +44,12 @@ export default function Home() {
     return () => clearInterval(t)
   }, [])
 
-  // Background nature music — exclusively active on the landing page
+  // Ambient music playback — exclusively active on the landing page
   useEffect(() => {
-    const audio = new Audio('/audio/nature.mp3')
+    const audio = new Audio(currentTrack.src)
     audio.loop = true
-    audio.volume = 0.4
+    audio.volume = 0.42
+    audio.muted = isMuted
     audioRef.current = audio
 
     let interacted = false
@@ -52,13 +61,15 @@ export default function Home() {
           setIsMuted(false)
         })
         .catch(() => {
-          // Browser requires user interaction before autoplay
+          // Autoplay restricted until user interaction
           setIsPlaying(false)
           setIsMuted(true)
         })
     }
 
-    startAudio()
+    if (!isMuted) {
+      startAudio()
+    }
 
     const onUserInteract = () => {
       if (interacted) return
@@ -77,7 +88,7 @@ export default function Home() {
     window.addEventListener('keydown', onUserInteract, { passive: true })
     window.addEventListener('touchstart', onUserInteract, { passive: true })
 
-    // Clean up when leaving landing page: stop audio completely
+    // Clean up when switching tracks or navigating away: stop audio completely
     return () => {
       window.removeEventListener('click', onUserInteract)
       window.removeEventListener('keydown', onUserInteract)
@@ -86,7 +97,7 @@ export default function Home() {
       audio.currentTime = 0
       audioRef.current = null
     }
-  }, [])
+  }, [currentTrackId])
 
   const toggleMute = () => {
     const audio = audioRef.current
@@ -104,6 +115,11 @@ export default function Home() {
       audio.muted = true
       setIsMuted(true)
     }
+  }
+
+  const handleTrackChange = (newId) => {
+    setCurrentTrackId(newId)
+    setIsMuted(false)
   }
 
   return (
@@ -198,27 +214,42 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Ambient sound controller pill with mute button ── */}
-      <button
-        className={`${styles.soundPill} ${isMuted ? styles.soundPillMuted : styles.soundPillActive}`}
-        onClick={toggleMute}
-        title={isMuted ? "Unmute nature ambient music" : "Mute nature ambient music"}
-        aria-label={isMuted ? "Unmute nature ambient music" : "Mute nature ambient music"}
-        type="button"
-      >
-        <span className={styles.soundPillIcon}>{isMuted ? '🔇' : '🌿'}</span>
-        <span className={styles.soundPillText}>
-          {isMuted ? 'Nature sound muted' : 'Nature ambience'}
-        </span>
+      {/* ── Ambient sound controller with dropdown track selector & mute button ── */}
+      <div className={`${styles.soundController} ${isMuted ? styles.soundMuted : styles.soundActive}`}>
+        <div className={styles.trackSelectWrap}>
+          <span className={styles.trackIcon}>{currentTrack.icon}</span>
+          <select
+            className={styles.trackSelect}
+            value={currentTrackId}
+            onChange={e => handleTrackChange(e.target.value)}
+            aria-label="Select background ambience music"
+          >
+            {AMBIENT_TRACKS.map(t => (
+              <option key={t.id} value={t.id} className={styles.trackOption}>
+                {t.icon} {t.title}
+              </option>
+            ))}
+          </select>
+          <span className={styles.selectArrow}>▾</span>
+        </div>
+
         {!isMuted && isPlaying && (
           <span className={styles.soundWaves}>
             <span /><span /><span />
           </span>
         )}
-        <span className={styles.soundPillAction}>
-          {isMuted ? 'Unmute' : 'Mute'}
-        </span>
-      </button>
+
+        <button
+          type="button"
+          className={styles.muteBtn}
+          onClick={toggleMute}
+          title={isMuted ? `Unmute ${currentTrack.title}` : `Mute ${currentTrack.title}`}
+          aria-label={isMuted ? "Unmute sound" : "Mute sound"}
+        >
+          <span className={styles.muteIcon}>{isMuted ? '🔇' : '🔊'}</span>
+          <span className={styles.muteText}>{isMuted ? 'Unmute' : 'Mute'}</span>
+        </button>
+      </div>
 
     </div>
   )

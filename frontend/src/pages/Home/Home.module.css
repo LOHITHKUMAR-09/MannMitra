@@ -48,25 +48,24 @@
 .ctaCard h2 { margin-bottom: 4px; }
 .ctaCard p { max-width: 46ch; }
 
-/* ── Ambient sound controller pill ── */
-.soundPill {
+/* ── Ambient sound controller with dropdown ── */
+.soundController {
   position: fixed;
   bottom: 24px;
   right: 28px;
   z-index: 99;
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 8px 16px;
+  gap: 8px;
+  padding: 5px 6px 5px 12px;
   border-radius: 100px;
-  background: rgba(12, 16, 30, 0.88);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04);
-  cursor: pointer;
+  background: rgba(12, 16, 30, 0.90);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.04);
   transition: all 0.25s ease;
   user-select: none;
-  animation: floatIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: floatIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @keyframes floatIn {
@@ -74,32 +73,70 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.soundPill:hover {
-  background: rgba(16, 22, 40, 0.96);
-  border-color: rgba(111, 184, 168, 0.35);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6), 0 0 20px rgba(111, 184, 168, 0.15);
+.soundController:hover {
+  background: rgba(15, 20, 38, 0.96);
+  border-color: rgba(111, 184, 168, 0.4);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.65), 0 0 24px rgba(111, 184, 168, 0.18);
   transform: translateY(-2px);
 }
 
-.soundPillActive {
+.soundActive {
   border-color: rgba(111, 184, 168, 0.3);
 }
 
-.soundPillMuted {
+.soundMuted {
   border-color: rgba(255, 255, 255, 0.08);
-  opacity: 0.85;
+  opacity: 0.88;
 }
 
-.soundPillIcon {
+/* Dropdown wrapper */
+.trackSelectWrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+
+.trackIcon {
   font-size: 0.95rem;
   line-height: 1;
+  pointer-events: none;
 }
 
-.soundPillText {
+.trackSelect {
+  background: transparent;
+  border: none;
+  color: var(--text);
   font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.03em;
-  color: var(--text-dim);
+  font-size: 0.73rem;
+  letter-spacing: 0.02em;
+  padding: 4px 18px 4px 2px;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.trackOption {
+  background: #0d1120;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  padding: 8px;
+}
+
+.selectArrow {
+  position: absolute;
+  right: 2px;
+  font-size: 0.65rem;
+  color: var(--calm);
+  pointer-events: none;
+  transition: transform 0.2s;
+}
+
+.trackSelectWrap:hover .selectArrow {
+  transform: translateY(1px);
 }
 
 .soundWaves {
@@ -125,31 +162,46 @@
   100% { height: 11px; }
 }
 
-.soundPillAction {
-  font-family: var(--font-mono);
-  font-size: 0.64rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 2px 7px;
-  border-radius: 100px;
+/* Mute toggle button */
+.muteBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: var(--calm);
-  transition: all 0.2s;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 100px;
+  padding: 4px 11px;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
 }
 
-.soundPill:hover .soundPillAction {
-  background: rgba(111, 184, 168, 0.15);
+.muteBtn:hover {
+  background: rgba(111, 184, 168, 0.16);
   border-color: rgba(111, 184, 168, 0.4);
+  color: var(--calm);
 }
 
-@media (max-width: 600px) {
-  .soundPill {
+.muteIcon {
+  font-size: 0.78rem;
+  line-height: 1;
+}
+
+@media (max-width: 640px) {
+  .soundController {
     bottom: 16px;
     right: 16px;
-    padding: 7px 13px;
+    padding: 5px 8px;
   }
-  .soundPillText {
+  .trackSelect {
+    font-size: 0.68rem;
+    max-width: 120px;
+  }
+  .muteText {
     display: none;
   }
 }
