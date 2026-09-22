@@ -182,26 +182,3 @@
   box-shadow: 0 0 24px rgba(228, 85, 95, 0.5);
   transform: translateY(-1px);
 }
-
-/* ── Footer ── */
-.footer {
-  margin-top: 14px;
-  display: flex;
-  justify-content: center;
-}
-
-.homeLink {
-  background: none;
-  border: none;
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  color: var(--text-faint);
-  cursor: pointer;
-  transition: color 0.15s;
-  padding: 4px 8px;
-}
-
-.homeLink:hover {
-  color: var(--calm);
-  text-decoration: underline;
-}

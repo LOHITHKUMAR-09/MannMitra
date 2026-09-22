@@ -5,7 +5,7 @@ import styles from './LogoutModal.module.css'
 /**
  * Confirmation modal for logging out of the account or ending the chat session.
  */
-export default function LogoutModal({ isOpen, onClose, onConfirm, onGoHome, user }) {
+export default function LogoutModal({ isOpen, onClose, onConfirm, user }) {
   if (!isOpen) return null
 
   const isAccount = Boolean(user)
@@ -59,14 +59,6 @@ export default function LogoutModal({ isOpen, onClose, onConfirm, onGoHome, user
             {isAccount ? 'Log out' : 'End session'}
           </button>
         </div>
-
-        {onGoHome && (
-          <div className={styles.footer}>
-            <button className={styles.homeLink} onClick={onGoHome} type="button">
-              ← Return to landing page
-            </button>
-          </div>
-        )}
       </div>
     </div>
   )

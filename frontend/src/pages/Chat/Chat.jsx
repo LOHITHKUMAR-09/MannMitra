@@ -258,15 +258,6 @@ export default function Chat() {
     }
   }
 
-  const handleGoHome = async () => {
-    try {
-      await logout()
-    } finally {
-      setShowLogoutModal(false)
-      navigate('/')
-    }
-  }
-
   const glow = moodGlow[currentMood] || moodGlow.neutral
 
   const ActiveComp = activeActivity ? ACTIVITY_MAP[activeActivity]?.component : null
@@ -531,7 +522,6 @@ export default function Chat() {
         isOpen={showLogoutModal}
         onClose={() => setShowLogoutModal(false)}
         onConfirm={handleConfirmLogout}
-        onGoHome={handleGoHome}
         user={currentUser}
       />
     </div>
